@@ -1,0 +1,120 @@
+1. Mostrar mensaje de ayuda
+$ ./sort_program --help
+Uso: ./sort_program -size <s> -ord <m> -init <i> [f] -trace <y|n>
+  -size <s>   Tamaño de la secuencia
+  -ord <m>    Método de ordenación:
+                1 -> Inserción
+                2 -> Sacudida
+                3 -> QuickSort
+                4 -> HeapSort
+                5 -> ShellSort
+  -init <i> [f]  Forma de inicializar la secuencia:
+                manual   -> Introduce los datos por teclado
+                random   -> Genera datos aleatorios
+                file     -> Lee los datos de un fichero (se debe especificar el nombre del fichero f)
+  -trace <y|n>   Mostrar (y) o no (n) la traza de la ordenación
+  --help         Muestra este mensaje de ayuda
+
+
+2. Ordenación en modo manual con Inserción y traza activada
+$ ./sort_program -size 5 -ord 1 -init manual -trace y
+Introduce 5 números de 8 dígitos:
+Elemento 1: 12345678
+Elemento 2: 87654321
+Elemento 3: 23456789
+Elemento 4: 34567890
+Elemento 5: 45678901
+
+Secuencia original:
+12345678 87654321 23456789 34567890 45678901 
+
+[Inserción] Iteración 1: 12345678 87654321 87654321 34567890 45678901 
+[Inserción] Iteración 2: 12345678 23456789 87654321 34567890 45678901 
+[Inserción] Iteración 3: 12345678 23456789 34567890 87654321 45678901 
+[Inserción] Iteración 4: 12345678 23456789 34567890 45678901 87654321 
+
+Ordenando la secuencia...
+
+Secuencia ordenada:
+12345678 23456789 34567890 45678901 87654321 
+
+
+3. Ordenación en modo random con QuickSort y traza desactivada
+$ ./sort_program -size 10 -ord 3 -init random -trace n
+
+Secuencia original:
+[Se muestra 10 números generados aleatoriamente, por ejemplo:]
+34567890 12345678 98765432 23456789 87654321 45678901 56789012 67890123 78901234 89012345 
+
+Ordenando la secuencia...
+
+Secuencia ordenada:
+[Se muestran los 10 números ordenados de menor a mayor]
+12345678 23456789 34567890 45678901 56789012 67890123 78901234 87654321 89012345 98765432
+
+
+4. Ordenación en modo file utilizando HeapSort con traza activada
+Contenido de data.txt:
+12345678
+87654321
+23456789
+34567890
+45678901
+56789012
+
+$ ./sort_program -size 6 -ord 4 -init file data.txt -trace y
+
+Secuencia original:
+12345678 87654321 23456789 34567890 45678901 56789012 
+
+[HeapSort] Heap inicial: 87654321 56789012 34567890 12345678 45678901 23456789 
+[HeapSort] Tras extraer el máximo: 45678901 56789012 34567890 12345678 23456789 87654321 
+[HeapSort] Tras extraer el máximo: 34567890 23456789 12345678 45678901 56789012 87654321 
+[HeapSort] Tras extraer el máximo: 23456789 12345678 34567890 45678901 56789012 87654321 
+[HeapSort] Tras extraer el máximo: 12345678 23456789 34567890 45678901 56789012 87654321 
+
+Ordenando la secuencia...
+
+Secuencia ordenada:
+12345678 23456789 34567890 45678901 56789012 87654321 
+
+
+5. Ordenación con ShellSort
+$ ./sort_program -size 8 -ord 5 -init random -trace y
+Introduce el factor de reducción alfa (0 < alfa < 1): 0.5
+
+Secuencia original:
+[Se muestra 8 números aleatorios, por ejemplo:]
+45678901 34567890 98765432 12345678 87654321 23456789 56789012 67890123 
+
+[ShellSort] Iteración 1 con gap = 4: [Se muestra el estado del vector tras la primera pasada]
+[ShellSort] Iteración 2 con gap = 2: [Estado intermedio]
+[ShellSort] Iteración 3 con gap = 1: [Estado intermedio]
+
+Ordenando la secuencia...
+
+Secuencia ordenada:
+[Se muestran los 8 números ordenados de menor a mayor]
+12345678 23456789 34567890 45678901 56789012 67890123 87654321 98765432 
+
+6. Ordenacion por Sacudida (ShakeSort)
+./sort_program -size 5 -ord 2 -init manual -trace y
+Introduce 5 números de 8 dígitos:
+Elemento 1: 34567890
+Elemento 2: 12345678
+Elemento 3: 98765432
+Elemento 4: 23456789
+Elemento 5: 87654321
+Secuencia original:
+34567890 12345678 98765432 23456789 87654321 
+
+[Sacudida] Iteración 1 (ida): 12345678 34567890 98765432 23456789 87654321 
+[Sacudida] Iteración 2 (vuelta): 12345678 34567890 23456789 98765432 87654321 
+[Sacudida] Iteración 3 (ida): 12345678 23456789 34567890 98765432 87654321 
+[Sacudida] Iteración 4 (vuelta): 12345678 23456789 34567890 87654321 98765432 
+[Sacudida] Iteración 5 (ida): 12345678 23456789 34567890 87654321 98765432 
+
+Ordenando la secuencia...
+
+Secuencia ordenada:
+12345678 23456789 34567890 87654321 98765432 
