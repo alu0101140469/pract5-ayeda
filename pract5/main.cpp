@@ -2,21 +2,16 @@
 #include <fstream>
 #include <cstdlib>
 #include <cstring>
-#include "nif.hpp"
-#include "Sequence.hpp"
-#include "SortMethods.hpp"
+#include "Persona.hpp"      // Usamos la clase persona
+#include "Sequence.hpp"     // Para staticSequence
+#include "SortMethods.hpp"  // Para los métodos de ordenación
 
 using namespace std;
 
-// Daniel Palenzuela Álvarez alu0101140469
-
-// Función que imprime el uso correcto del programa en consola.
+// Función que muestra el uso correcto del programa.
 void printUsage(char* progName) {
-    cout << "  Programa de algoritmos de ordenación con NIF\n";
-    cout << "Instrucciones:\n";
-    cout << "  " << progName << " -size <s> -ord <m> -init <i> [f] -trace <y|n>\n";
-    cout << "Opciones:\n";
-    cout << "  -size <s>   Tamaño de la secuencia.\n";
+    cout << "Uso: " << progName << " -size <s> -ord <m> -init <i> [f] -trace <y|n>\n";
+    cout << "  -size <s>   Tamaño de la secuencia\n";
     cout << "  -ord <m>    Método de ordenación:\n";
     cout << "                1 -> Inserción\n";
     cout << "                2 -> Sacudida\n";
@@ -24,21 +19,20 @@ void printUsage(char* progName) {
     cout << "                4 -> HeapSort\n";
     cout << "                5 -> ShellSort\n";
     cout << "  -init <i> [f]  Forma de inicializar la secuencia:\n";
-    cout << "                manual   -> Introduce los datos por teclado.\n";
-    cout << "                random   -> Genera datos aleatorios.\n";
-    cout << "                file     -> Lee los datos de un fichero (se debe especificar el nombre del fichero f)\n";
-    cout << "  -trace <y|n>   Mostrar sí (y) o no (n) la traza de la ordenación.\n";
-    cout << "  --help         Muestra este mensaje de ayuda.\n";
+    cout << "                manual   -> Introduce los datos por teclado\n";
+    cout << "                random   -> Genera datos aleatorios\n";
+    cout << "                file     -> Lee los datos de un fichero (formato: id nombre apellido1 apellido2)\n";
+    cout << "  -trace <y|n>   Mostrar (y) o no (n) la traza de la ordenación\n";
+    cout << "  --help         Muestra este mensaje de ayuda\n";
 }
 
 int main(int argc, char* argv[]) {
-    // Mostrar la guía con el comando --help y finaliza
+    // Si se invoca con --help se muestra la guía y se termina.
     if(argc == 2 && strcmp(argv[1], "--help") == 0) {
         printUsage(argv[0]);
         return 0;
     }
 
-    // Se comprueba que se han pasado al menos los parámetros mínimos.
     if(argc < 7) {
         printUsage(argv[0]);
         return 1;
@@ -46,60 +40,66 @@ int main(int argc, char* argv[]) {
     
     unsigned size = 0;      // Tamaño de la secuencia
     int ord = 0;            // Código del método de ordenación
-    string initMode = "";   // Modo de inicialización (manual, random o file)
-    string fileName = "";   // Nombre del fichero en caso de usar el modo file
-    bool trace = false;     // Para determinar si se imprimirá la traza
-
-    // Se procesan los parámetros de la línea de comandos.
+    string initMode = "";   // Modo de inicialización (manual, random, file)
+    string fileName = "";   // Nombre del fichero para modo file
+    bool trace = false;     // Opción de traza
+     
+    // Procesar argumentos de línea de comandos.
     for (int i = 1; i < argc; i++){
         if(strcmp(argv[i], "-size") == 0 && i+1 < argc) {
-            // Convierte el siguiente argumento a número entero.
             size = atoi(argv[++i]);
         } else if(strcmp(argv[i], "-ord") == 0 && i+1 < argc) {
-            // Selecciona el método de ordenación.
             ord = atoi(argv[++i]);
         } else if(strcmp(argv[i], "-init") == 0 && i+1 < argc) {
-            // Determina el modo de inicialización.
             initMode = argv[++i];
-            // Si el modo es file, el siguiente argumento es el nombre del fichero.
             if(initMode == "file" && i+1 < argc) {
                 fileName = argv[++i];
             }
         } else if(strcmp(argv[i], "-trace") == 0 && i+1 < argc) {
-            // Configura la opción de traza (la impresión intermedia de la secuencia).
             string t = argv[++i];
             trace = (t == "y" || t == "Y");
         }
     }
     
-    // Validación de parámetros mínimos.
     if(size == 0 || ord < 1 || ord > 5 || initMode == "") {
         printUsage(argv[0]);
         return 1;
     }
     
-    // Se crea la secuencia de elementos tipo nif, con tamaño size.
-    staticSequence<nif> seq(size);
+    // Crear la secuencia de objeto persona.
+    staticSequence<persona> seq(size);
     
-    // Inicializa la secuencia según el modo especificado.
+    // Inicializar la secuencia.
     if(initMode == "manual") {
-        cout << "Introduce " << size << " números de 8 dígitos:\n";
+        cout << "Ingrese los datos para " << size << " personas.\n";
         for (unsigned i = 0; i < size; i++) {
-            long num;
-            cout << "Elemento " << i+1 << ": ";
+            string tipo, nombre, apellido1, apellido2;
+            int num;
+            cout << "Persona " << i+1 << ":\n";
+            cout << "  Tipo de ID (alu, prof, pas): ";
+            cin >> tipo;
+            cout << "  Número (hasta 7 dígitos): ";
             cin >> num;
-            // Se asigna el valor al elemento i de la secuencia.
-            seq[i] = nif(num);
+            cout << "  Nombre: ";
+            cin >> nombre;
+            cout << "  Apellido1: ";
+            cin >> apellido1;
+            cout << "  Apellido2: ";
+            cin >> apellido2;
+            seq[i] = persona(tipo, num, nombre, apellido1, apellido2);
         }
     } else if(initMode == "random") {
-        // Se rellenan los elementos utilizando el constructor por defecto de nif.
+        // Para datos aleatorios, se asignan valores fijos o generados.
+        string tipos[3] = {"alu", "prof", "pas"};
         for (unsigned i = 0; i < size; i++) {
-            seq[i] = nif();
+            string tipo = tipos[rand() % 3];
+            int num = rand() % 10000000; // Número de 0 a 9999999
+            // Se usan nombres ficticios.
+            seq[i] = persona(tipo, num, "Nombre", "Apellido1", "Apellido2");
         }
     } else if(initMode == "file") {
-        // Inicialización desde fichero.
         if(fileName == "") {
-            cout << "No se especificó fichero para la inicialización.\n";
+            cout << "No se especificó el fichero para la inicialización.\n";
             return 1;
         }
         ifstream infile(fileName);
@@ -107,15 +107,29 @@ int main(int argc, char* argv[]) {
             cout << "No se pudo abrir el fichero " << fileName << "\n";
             return 1;
         }
-        long num;
+        // Se asume que cada línea del fichero contiene: id nombre apellido1 apellido2.
+        // El id estará en el formato (por ejemplo, alu0001345). Se extrae el tipo y el número.
+        string id, nombre, apellido1, apellido2;
         unsigned count = 0;
-        // Lee números de 8 dígitos hasta llenar la secuencia o agotar el fichero.
-        while(infile >> num && count < size) {
-            seq[count] = nif(num);
+        while(infile >> id >> nombre >> apellido1 >> apellido2 && count < size) {
+            // Extraer el prefijo (letras) y la parte numérica.
+            string tipo = "";
+            int num = 0;
+            // Asumimos que el id comienza con letras y luego 7 dígitos.
+            for (char c : id) {
+                if (isalpha(c))
+                    tipo.push_back(c);
+                else
+                    break;
+            }
+            // La parte numérica es el resto.
+            string numStr = id.substr(tipo.size());
+            num = stoi(numStr);
+            seq[count] = persona(tipo, num, nombre, apellido1, apellido2);
             count++;
         }
         if(count < size) {
-            cout << "El fichero no contiene suficientes datos. Se han leído " << count << " elementos.\n";
+            cout << "El fichero no contiene suficientes datos (se leyeron " << count << " elementos).\n";
             return 1;
         }
         infile.close();
@@ -125,43 +139,42 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     
-    // Muestra la secuencia original antes de ordenar.
+    // Mostrar la secuencia original.
     cout << "\nSecuencia original:\n";
     seq.print();
     
-    // Selecciona e instancia el método de ordenación correspondiente.
-    SortMethod<nif>* sortMethod = nullptr;
-    if (ord == 5) {  // ShellSort requiere el parámetro alfa.
+    // Seleccionar el método de ordenación.
+    SortMethod<persona>* sortMethod = nullptr;
+    if(ord == 5) {  // ShellSort
         double alfa = 0.0;
-        cout << "Introduce el factor de reducción alfa (0 < alfa < 1): ";
+        cout << "Ingrese el factor de reducción alfa (0 < alfa < 1): ";
         cin >> alfa;
         if(alfa <= 0 || alfa >= 1) {
             cout << "Valor de alfa no válido.\n";
             return 1;
         }
-        sortMethod = new ShellSortMethod<nif>(&seq, trace, alfa);
-    } else if (ord == 1) {
-        sortMethod = new InsertionSortMethod<nif>(&seq, trace);
-    } else if (ord == 2) {
-        sortMethod = new ShakeSortMethod<nif>(&seq, trace);
-    } else if (ord == 3) {
-        sortMethod = new QuickSortMethod<nif>(&seq, trace);
-    } else if (ord == 4) {
-        sortMethod = new HeapSortMethod<nif>(&seq, trace);
+        sortMethod = new ShellSortMethod<persona>(&seq, trace, alfa);
+    } else if(ord == 1) {
+        sortMethod = new InsertionSortMethod<persona>(&seq, trace);
+    } else if(ord == 2) {
+        sortMethod = new ShakeSortMethod<persona>(&seq, trace);
+    } else if(ord == 3) {
+        sortMethod = new QuickSortMethod<persona>(&seq, trace);
+    } else if(ord == 4) {
+        sortMethod = new HeapSortMethod<persona>(&seq, trace);
     } else {
         cout << "Código de método de ordenación no reconocido.\n";
         return 1;
     }
     
-    // Ejecuta el método de ordenación.
+    // Ejecutar la ordenación.
     cout << "\nOrdenando la secuencia...\n";
     sortMethod->Sort();
     
-    // Muestra el resultado final tras la ordenación.
+    // Mostrar la secuencia ordenada.
     cout << "\nSecuencia ordenada:\n";
     seq.print();
     
-    // Libera la memoria dinámica utilizada para el método de ordenación.
     delete sortMethod;
     return 0;
 }
