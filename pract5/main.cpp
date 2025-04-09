@@ -2,9 +2,9 @@
 #include <fstream>
 #include <cstdlib>
 #include <cstring>
-#include "Persona.hpp"      // Usamos la clase persona
-#include "Sequence.hpp"     // Para staticSequence
-#include "SortMethods.hpp"  // Para los métodos de ordenación
+#include "Persona.hpp"      // Define la clase persona (ID + nombre y apellidos)
+#include "Sequence.hpp"     // Define la interfaz Sequence y la implementación staticSequence
+#include "SortMethods.hpp"  // Define la jerarquía de clases de ordenación con tabla resumen
 
 using namespace std;
 
@@ -27,12 +27,12 @@ void printUsage(char* progName) {
 }
 
 int main(int argc, char* argv[]) {
-    // Si se invoca con --help se muestra la guía y se termina.
+    // Si se invoca con "--help", muestra la ayuda y termina.
     if(argc == 2 && strcmp(argv[1], "--help") == 0) {
         printUsage(argv[0]);
         return 0;
     }
-
+    // Se requieren al menos 7 parámetros.
     if(argc < 7) {
         printUsage(argv[0]);
         return 1;
@@ -40,11 +40,11 @@ int main(int argc, char* argv[]) {
     
     unsigned size = 0;      // Tamaño de la secuencia
     int ord = 0;            // Código del método de ordenación
-    string initMode = "";   // Modo de inicialización (manual, random, file)
-    string fileName = "";   // Nombre del fichero para modo file
-    bool trace = false;     // Opción de traza
-     
-    // Procesar argumentos de línea de comandos.
+    string initMode = "";   // Modo de inicialización: manual, random, file
+    string fileName = "";   // Nombre del fichero (en modo file)
+    bool trace = false;     // Si se desea traza en la ordenación
+    
+    // Procesar los argumentos de línea de comandos.
     for (int i = 1; i < argc; i++){
         if(strcmp(argv[i], "-size") == 0 && i+1 < argc) {
             size = atoi(argv[++i]);
@@ -66,20 +66,29 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     
-    // Crear la secuencia de objeto persona.
+    // Crear la secuencia de objetos "persona"
     staticSequence<persona> seq(size);
     
-    // Inicializar la secuencia.
+    // Inicialización de la secuencia en función del modo elegido.
     if(initMode == "manual") {
         cout << "Ingrese los datos para " << size << " personas.\n";
         for (unsigned i = 0; i < size; i++) {
             string tipo, nombre, apellido1, apellido2;
+            string numStr;
             int num;
             cout << "Persona " << i+1 << ":\n";
             cout << "  Tipo de ID (alu, prof, pas): ";
             cin >> tipo;
-            cout << "  Número (hasta 7 dígitos): ";
-            cin >> num;
+            cout << "  Número (exactamente 7 dígitos): ";
+            cin >> numStr;
+            // Se valida que el número tenga exactamente 7 dígitos.
+            if(numStr.length() != 7) {
+                cerr << "Error: Debe ingresar exactamente 7 dígitos. Se ha ingresado \"" 
+                     << numStr << "\"\n";
+                exit(1);
+            }
+            // Convertir la cadena a entero (no se rellenan ceros, debe ser escrito completo).
+            num = stoi(numStr);
             cout << "  Nombre: ";
             cin >> nombre;
             cout << "  Apellido1: ";
@@ -89,11 +98,11 @@ int main(int argc, char* argv[]) {
             seq[i] = persona(tipo, num, nombre, apellido1, apellido2);
         }
     } else if(initMode == "random") {
-        // Para datos aleatorios, se asignan valores fijos o generados.
+        // En modo random se generan datos aleatorios (aseguramos 7 dígitos generando números entre 1000000 y 9999999)
         string tipos[3] = {"alu", "prof", "pas"};
         for (unsigned i = 0; i < size; i++) {
             string tipo = tipos[rand() % 3];
-            int num = rand() % 10000000; // Número de 0 a 9999999
+            int num = 1000000 + rand() % 9000000; // Número entre 1000000 y 9999999 (7 dígitos)
             // Se usan nombres ficticios.
             seq[i] = persona(tipo, num, "Nombre", "Apellido1", "Apellido2");
         }
@@ -108,28 +117,31 @@ int main(int argc, char* argv[]) {
             return 1;
         }
         // Se asume que cada línea del fichero contiene: id nombre apellido1 apellido2.
-        // El id estará en el formato (por ejemplo, alu0001345). Se extrae el tipo y el número.
+        // Por ejemplo: alu1234567 Juan Pérez Gómez
         string id, nombre, apellido1, apellido2;
         unsigned count = 0;
         while(infile >> id >> nombre >> apellido1 >> apellido2 && count < size) {
-            // Extraer el prefijo (letras) y la parte numérica.
+            // Extraer el tipo (prefijo) y la parte numérica.
             string tipo = "";
-            int num = 0;
-            // Asumimos que el id comienza con letras y luego 7 dígitos.
             for (char c : id) {
-                if (isalpha(c))
+                if(isalpha(c))
                     tipo.push_back(c);
                 else
                     break;
             }
-            // La parte numérica es el resto.
+            // La parte numérica se extrae a partir del tamaño del prefijo.
             string numStr = id.substr(tipo.size());
-            num = stoi(numStr);
+            // Se valida que el número tenga 7 dígitos.
+            if(numStr.length() != 7) {
+                cerr << "Error: El ID '" << id << "' no contiene exactamente 7 dígitos.\n";
+                exit(1);
+            }
+            int num = stoi(numStr);
             seq[count] = persona(tipo, num, nombre, apellido1, apellido2);
             count++;
         }
         if(count < size) {
-            cout << "El fichero no contiene suficientes datos (se leyeron " << count << " elementos).\n";
+            cout << "El fichero no contiene suficientes datos (se leyeron " << count << " registros).\n";
             return 1;
         }
         infile.close();
@@ -139,13 +151,13 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     
-    // Mostrar la secuencia original.
+    // Muestra la secuencia original.
     cout << "\nSecuencia original:\n";
     seq.print();
     
-    // Seleccionar el método de ordenación.
+    // Seleccionar el método de ordenación en función del parámetro -ord.
     SortMethod<persona>* sortMethod = nullptr;
-    if(ord == 5) {  // ShellSort
+    if(ord == 5) {  // ShellSort requiere además el factor alfa.
         double alfa = 0.0;
         cout << "Ingrese el factor de reducción alfa (0 < alfa < 1): ";
         cin >> alfa;
@@ -167,14 +179,15 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     
-    // Ejecutar la ordenación.
+    // Ejecuta el método de ordenación seleccionado.
     cout << "\nOrdenando la secuencia...\n";
     sortMethod->Sort();
     
-    // Mostrar la secuencia ordenada.
+    // Muestra la secuencia ordenada.
     cout << "\nSecuencia ordenada:\n";
     seq.print();
     
+    // Libera la memoria del objeto creado para la ordenación.
     delete sortMethod;
     return 0;
 }
