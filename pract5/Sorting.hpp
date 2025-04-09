@@ -6,33 +6,37 @@
 #include <cmath>
 #include <algorithm>
 
-// Daniel Palenzuela Álvarez alu0101140469
-
-// Función auxiliar que imprime los elementos de la secuencia (para la traza de los algoritmos)
+// Función auxiliar para imprimir la secuencia (para traza)
 template<typename Key>
 void printSequence(const Sequence<Key>& seq) {
     for (unsigned i = 0; i < seq.getSize(); i++) {
-        std::cout << seq[i] << " ";
+        std::cout << seq[i] << " | ";
     }
     std::cout << "\n";
 }
 
 // 1. Ordenación por Inserción
 template<typename Key>
-void insertionSort(Sequence<Key>& seq, bool trace) {
+void insertionSort(Sequence<Key>& seq, bool trace, unsigned long &comparisons, unsigned long &swaps) {
+    comparisons = 0;
+    swaps = 0;
     unsigned n = seq.getSize();
-    // Se recorre el vector desde el segundo elemento hasta el final.
     for (unsigned i = 1; i < n; i++) {
-        Key key = seq[i];  // Elemento a insertar en la parte ordenada.
+        Key key = seq[i];
         int j = i - 1;
-        // Desplaza elementos mayores que key a una posición hacia la derecha.
-        while (j >= 0 && seq[j] > key) {
-            seq[j + 1] = seq[j];
-            j--;
+        // Comparar y mover elementos que sean mayores que key
+        while (j >= 0) {
+            comparisons++;  // Se realiza una comparación
+            if (seq[j] > key) {
+                seq[j + 1] = seq[j];
+                swaps++;    // Se cuenta el movimiento (swap)
+                j--;
+            } else {
+                break;
+            }
         }
-        // Inserta key en la posición correcta.
         seq[j + 1] = key;
-        // Si se solicita la traza, imprime el estado actual del vector.
+        swaps++;  // Se cuenta la asignación de key
         if (trace) {
             std::cout << "[Inserción] Iteración " << i << ": ";
             printSequence(seq);
@@ -40,19 +44,23 @@ void insertionSort(Sequence<Key>& seq, bool trace) {
     }
 }
 
-// 2. Ordenación por Sacudida
+// 2. Ordenación por Sacudida (Cocktail Shaker Sort)
 template<typename Key>
-void shakeSort(Sequence<Key>& seq, bool trace) {
-    bool swapped = true;         // Para ver si hubo intercambios.
-    unsigned start = 0;          // Índice inicial del recorrido.
-    unsigned end = seq.getSize() - 1;  // Índice final del recorrido.
-    unsigned iteration = 0;      // Contador de iteraciones (para la traza).
+void shakeSort(Sequence<Key>& seq, bool trace, unsigned long &comparisons, unsigned long &swaps) {
+    comparisons = 0;
+    swaps = 0;
+    bool swapped = true;
+    unsigned start = 0;
+    unsigned end = seq.getSize() - 1;
+    unsigned iteration = 0;
     while (swapped) {
         swapped = false;
         // Recorrido de izquierda a derecha.
         for (unsigned i = start; i < end; i++) {
-            if (seq[i] > seq[i + 1]) { // Si el elemento actual es mayor que el siguiente
-                std::swap(seq[i], seq[i + 1]);  // Se intercambian
+            comparisons++;  // Cada comparación en el if
+            if (seq[i] > seq[i + 1]) {
+                std::swap(seq[i], seq[i + 1]);
+                swaps++;
                 swapped = true;
             }
         }
@@ -61,16 +69,16 @@ void shakeSort(Sequence<Key>& seq, bool trace) {
             std::cout << "[Sacudida] Iteración " << iteration << " (ida): ";
             printSequence(seq);
         }
-        // Si no se produjo ningún intercambio, la secuencia está ordenada.
         if (!swapped)
             break;
         swapped = false;
-        if (end > 0)
-            end--;
+        if (end > 0) end--;
         // Recorrido de derecha a izquierda.
         for (unsigned i = end; i > start; i--) {
+            comparisons++;
             if (seq[i - 1] > seq[i]) {
                 std::swap(seq[i - 1], seq[i]);
+                swaps++;
                 swapped = true;
             }
         }
@@ -84,81 +92,87 @@ void shakeSort(Sequence<Key>& seq, bool trace) {
 }
 
 // 3. Ordenación por QuickSort
-// Función de partición que coloca el pivote en su posición correcta.
+// Función de partición que reubica el pivote en su posición correcta.
 template<typename Key>
-int partition(Sequence<Key>& seq, int low, int high) {
-    Key pivot = seq[high];   // Se elige el último elemento como pivote.
-    int i = low - 1;         // Índice del elemento menor.
+int partition(Sequence<Key>& seq, int low, int high, unsigned long &comparisons, unsigned long &swaps) {
+    Key pivot = seq[high];
+    int i = low - 1;
     for (int j = low; j <= high - 1; j++) {
+        comparisons++;
         if (seq[j] < pivot) {
             i++;
             std::swap(seq[i], seq[j]);
+            swaps++;
         }
     }
     std::swap(seq[i + 1], seq[high]);
-    return i + 1;  // Devuelve la posición del pivote.
+    swaps++;
+    return i + 1;
 }
 
 // Función recursiva auxiliar de QuickSort.
 template<typename Key>
-void quickSortHelper(Sequence<Key>& seq, int low, int high, bool trace) {
+void quickSortHelper(Sequence<Key>& seq, int low, int high, bool trace, unsigned long &comparisons, unsigned long &swaps) {
     if (low < high) {
-        int pi = partition(seq, low, high);
-        // Muestra la traza si se ha activado.
+        int pi = partition(seq, low, high, comparisons, swaps);
         if (trace) {
-            std::cout << "[QuickSort] Partición en índice " << pi << ": ";
+            std::cout << "[QuickSort] Pivote en índice " << pi << ": ";
             printSequence(seq);
         }
-        // Llamada recursiva para los subarreglos.
-        quickSortHelper(seq, low, pi - 1, trace);
-        quickSortHelper(seq, pi + 1, high, trace);
+        quickSortHelper(seq, low, pi - 1, trace, comparisons, swaps);
+        quickSortHelper(seq, pi + 1, high, trace, comparisons, swaps);
     }
 }
 
 // Función principal de QuickSort.
 template<typename Key>
-void quickSort(Sequence<Key>& seq, bool trace) {
-    quickSortHelper(seq, 0, seq.getSize() - 1, trace);
+void quickSort(Sequence<Key>& seq, bool trace, unsigned long &comparisons, unsigned long &swaps) {
+    comparisons = 0;
+    swaps = 0;
+    quickSortHelper(seq, 0, seq.getSize() - 1, trace, comparisons, swaps);
 }
 
 // 4. Ordenación por HeapSort
 // Función auxiliar heapify para mantener la propiedad del heap.
 template<typename Key>
-void heapify(Sequence<Key>& seq, int n, int i) {
-    int largest = i; // Inicialmente el mayor es la raíz
-    int l = 2 * i + 1; // Índice del hijo izquierdo
-    int r = 2 * i + 2; // Índice del hijo derecho
-
-    // Si el hijo izquierdo es mayor que la raíz.
-    if (l < n && seq[l] > seq[largest])
-        largest = l;
-    // Si el hijo derecho es mayor que el mayor actual.
-    if (r < n && seq[r] > seq[largest])
-        largest = r;
-    // Si el mayor no es la raíz.
+void heapify(Sequence<Key>& seq, int n, int i, unsigned long &comparisons, unsigned long &swaps) {
+    int largest = i;
+    int l = 2 * i + 1;
+    int r = 2 * i + 2;
+    if (l < n) {
+        comparisons++;
+        if (seq[l] > seq[largest])
+            largest = l;
+    }
+    if (r < n) {
+        comparisons++;
+        if (seq[r] > seq[largest])
+            largest = r;
+    }
     if (largest != i) {
         std::swap(seq[i], seq[largest]);
-        // Se recurre para el subárbol afectado.
-        heapify(seq, n, largest);
+        swaps++;
+        heapify(seq, n, largest, comparisons, swaps);
     }
 }
 
 // Función principal de HeapSort.
 template<typename Key>
-void heapSort(Sequence<Key>& seq, bool trace) {
+void heapSort(Sequence<Key>& seq, bool trace, unsigned long &comparisons, unsigned long &swaps) {
+    comparisons = 0;
+    swaps = 0;
     int n = seq.getSize();
-    // Se construye el heap (reorganiza el arreglo).
     for (int i = n / 2 - 1; i >= 0; i--) {
-        heapify(seq, n, i);
+        heapify(seq, n, i, comparisons, swaps);
     }
     if (trace) {
         std::cout << "[HeapSort] Heap inicial: ";
         printSequence(seq);
     }
-    // Se extraen elementos del heap uno a uno.
     for (int i = n - 1; i > 0; i--) {
-        std::swap(seq[0], seq[i]);  // Mueve la raíz al final.
-        heapify(seq, i, 0); // Ajusta el heap reducido.
+        std::swap(seq[0], seq[i]);
+        swaps++;
+        heapify(seq, i, 0, comparisons, swaps);
         if (trace) {
             std::cout << "[HeapSort] Tras extraer el máximo: ";
             printSequence(seq);
@@ -167,29 +181,34 @@ void heapSort(Sequence<Key>& seq, bool trace) {
 }
 
 // 5. Ordenación por ShellSort
-// Se utiliza una secuencia de incrementos determinada por el factor alfa (0 < alfa < 1)
+// Utiliza la reducción del gap multiplicándolo por alfa en cada iteración.
 template<typename Key>
-void shellSort(Sequence<Key>& seq, double alfa, bool trace) {
+void shellSort(Sequence<Key>& seq, double alfa, bool trace, unsigned long &comparisons, unsigned long &swaps) {
+    comparisons = 0;
+    swaps = 0;
     int n = seq.getSize();
-    int gap = n; // Inicialmente gap es igual al tamaño de la secuencia.
-    int iteration = 0; // Contador de iteraciones
-    // Mientras se puedan generar gaps mayores que 0.
+    int gap = n;
+    int iteration = 0;
     while ((gap = int(gap * alfa)) > 0) {
-        // Para cada elemento a partir del índice gap
         for (int i = gap; i < n; i++) {
             Key temp = seq[i];
             int j = i;
-            // Desplaza elementos que están en gap posiciones detrás si son mayores que temp.
-            while (j >= gap && seq[j - gap] > temp) {
-                seq[j] = seq[j - gap];
-                j -= gap;
+            while (j >= gap) {
+                comparisons++;
+                if (seq[j - gap] > temp) {
+                    seq[j] = seq[j - gap];
+                    swaps++;
+                    j -= gap;
+                } else {
+                    break;
+                }
             }
-            // Coloca temp en la posición correcta.
             seq[j] = temp;
+            swaps++;
         }
         iteration++;
         if (trace) {
-            std::cout << "[ShellSort] Iteración " << iteration << " con gap = " << gap << ": ";
+            std::cout << "[ShellSort] Iteración " << iteration << " (gap = " << gap << "): ";
             printSequence(seq);
         }
     }
